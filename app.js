@@ -83,6 +83,14 @@ function formMsg(id, text, ok) {
   el.className = "form-msg" + (text ? (ok ? " ok" : " error") : "");
 }
 
+/* État vide d'une page : message clair + GROS bouton doré qui ouvre le
+   formulaire d'ajout (plié en <details> plus bas) et défile jusqu'à lui.
+   Le clic est géré par l'écouteur délégué [data-open-form] de wireEvents(). */
+function emptyStateHtml(text, btnLabel, formBoxId) {
+  return '<div class="empty-state"><p>' + text + "</p>" +
+    '<button type="button" class="btn-gold big-btn" data-open-form="' + formBoxId + '">' + btnLabel + "</button></div>";
+}
+
 function authErrorFr(error) {
   const m = (error && error.message) || "";
   if (/invalid login credentials/i.test(m)) return "Courriel ou mot de passe incorrect.";
@@ -414,27 +422,29 @@ function renderDashboard() {
   $("#dash-sub").textContent = currentCabinet.name + " — " + fmtDate(today) +
     " · Ton rôle : " + (currentRole === "responsable" ? "Responsable" : "Employé") + ".";
 
+  /* Compteurs cliquables : ils mènent à la page correspondante
+     (clic géré par l'écouteur délégué [data-goto] de wireEvents()). */
   $("#dash-counters").innerHTML =
-    '<div class="counter-card"><span class="counter-num">' + data.clients.length + '</span><span class="counter-label">Clients</span></div>' +
-    '<div class="counter-card"><span class="counter-num">' + openDossiers.length + '</span><span class="counter-label">Dossiers en cours</span></div>' +
-    '<div class="counter-card' + (missingDocs.length ? " alert" : "") + '"><span class="counter-num">' + missingDocs.length + '</span><span class="counter-label">Documents manquants</span></div>' +
-    '<div class="counter-card' + (overdue.length ? " alert" : "") + '"><span class="counter-num">' + overdue.length + '</span><span class="counter-label">Échéances en retard</span></div>' +
-    '<div class="counter-card"><span class="counter-num">' + soon.length + '</span><span class="counter-label">Échéances sous 7 jours</span></div>';
+    '<div class="counter-card clickable" data-goto="clients"><span class="counter-num">' + data.clients.length + '</span><span class="counter-label">Clients <span class="goto-arrow">→</span></span></div>' +
+    '<div class="counter-card clickable" data-goto="dossiers"><span class="counter-num">' + openDossiers.length + '</span><span class="counter-label">Dossiers en cours <span class="goto-arrow">→</span></span></div>' +
+    '<div class="counter-card clickable' + (missingDocs.length ? " alert" : "") + '" data-goto="documents"><span class="counter-num">' + missingDocs.length + '</span><span class="counter-label">Documents manquants <span class="goto-arrow">→</span></span></div>' +
+    '<div class="counter-card clickable' + (overdue.length ? " alert" : "") + '" data-goto="echeances"><span class="counter-num">' + overdue.length + '</span><span class="counter-label">Échéances en retard <span class="goto-arrow">→</span></span></div>' +
+    '<div class="counter-card clickable" data-goto="echeances"><span class="counter-num">' + soon.length + '</span><span class="counter-label">Échéances sous 7 jours <span class="goto-arrow">→</span></span></div>';
 
   const alerts = [];
-  overdue.forEach((d) => alerts.push({ cls: "red", html: "🔴 <strong>En retard depuis le " + fmtDate(d.due_date) + "</strong> — " + esc(d.title) + " (" + esc(clientName(d.client_id)) + ")" }));
-  missingDocs.forEach((d) => alerts.push({ cls: "", html: "📄 <strong>Document manquant</strong> — " + esc(d.title) + " (" + esc(clientName(d.client_id)) + (d.dossier_id ? " · dossier " + esc(dossierTitle(d.dossier_id)) : "") + ")" }));
-  soon.forEach((d) => alerts.push({ cls: "", html: "⏰ <strong>" + fmtDate(d.due_date) + "</strong> — " + esc(d.title) + " (" + esc(clientName(d.client_id)) + ")" }));
+  overdue.forEach((d) => alerts.push({ cls: "red", page: "echeances", html: "🔴 <strong>En retard depuis le " + fmtDate(d.due_date) + "</strong> — " + esc(d.title) + " (" + esc(clientName(d.client_id)) + ")" }));
+  missingDocs.forEach((d) => alerts.push({ cls: "", page: "documents", html: "📄 <strong>Document manquant</strong> — " + esc(d.title) + " (" + esc(clientName(d.client_id)) + (d.dossier_id ? " · dossier " + esc(dossierTitle(d.dossier_id)) : "") + ")" }));
+  soon.forEach((d) => alerts.push({ cls: "", page: "echeances", html: "⏰ <strong>" + fmtDate(d.due_date) + "</strong> — " + esc(d.title) + " (" + esc(clientName(d.client_id)) + ")" }));
   $("#dash-alerts").innerHTML = alerts.length
-    ? alerts.map((a) => '<div class="alert-card ' + a.cls + '">' + a.html + "</div>").join("")
+    ? alerts.map((a) => '<div class="alert-card clickable ' + a.cls + '" data-goto="' + a.page + '">' + a.html + ' <span class="goto-arrow">→</span></div>').join("")
     : '<div class="alert-card green">✅ Aucune alerte : aucun document manquant, aucune échéance en retard ni dans les 7 prochains jours.</div>';
 
   const upcoming = data.deadlines.filter((d) => d.due_date >= today).slice(0, 8);
   $("#dash-upcoming").innerHTML = upcoming.length
     ? upcoming.map((d) =>
-        '<div class="item-card soon"><h4>' + esc(d.title) + '</h4><p>📅 ' + fmtDate(d.due_date) + " · " + esc(clientName(d.client_id)) + ' · <span class="badge gold">' + esc(d.kind) + "</span></p></div>"
+        '<div class="item-card soon clickable" data-goto="echeances"><h4>' + esc(d.title) + '</h4><p>📅 ' + fmtDate(d.due_date) + " · " + esc(clientName(d.client_id)) + ' · <span class="badge gold">' + esc(d.kind) + "</span></p></div>"
       ).join("")
-    : '<div class="empty-note">Aucune échéance à venir. Génère le calendrier fiscal d\'un client dans la page Échéances.</div>';
+    : '<div class="empty-note clickable" data-goto="echeances">Aucune échéance à venir. Génère le calendrier fiscal d\'un client dans la page Échéances. <span class="goto-arrow">→</span></div>';
 }
 
 /* ============================================================
@@ -443,7 +453,7 @@ function renderDashboard() {
 function renderClients() {
   const box = $("#clients-list");
   if (!data.clients.length) {
-    box.innerHTML = '<div class="empty-note">Aucun client pour le moment. Ajoute ton premier client avec le formulaire ci-dessous.</div>';
+    box.innerHTML = emptyStateHtml("Aucun client pour le moment. Ajoute ton premier client pour commencer.", "➕ Ajouter un client", "client-form-box");
     return;
   }
   box.innerHTML = data.clients.map((c) => {
@@ -532,11 +542,15 @@ function renderDossiers() {
   const list = filter ? data.dossiers.filter((d) => d.client_id === filter) : data.dossiers;
   const box = $("#dossiers-list");
   if (!data.clients.length) {
-    box.innerHTML = '<div class="empty-note">Ajoute d\'abord un client (page Clients) : un dossier appartient toujours à un client.</div>';
+    /* Sans client, le formulaire de dossier ne peut pas servir (un dossier
+       appartient toujours à un client) : le gros bouton mène donc à la
+       page Clients plutôt que d'ouvrir le formulaire. */
+    box.innerHTML = '<div class="empty-state"><p>Ajoute d\'abord un client : un dossier appartient toujours à un client.</p>' +
+      '<button type="button" class="btn-gold big-btn" data-goto="clients">👥 Ajouter un client</button></div>';
     return;
   }
   if (!list.length) {
-    box.innerHTML = '<div class="empty-note">Aucun dossier ici pour le moment. Crée-en un avec le formulaire ci-dessous.</div>';
+    box.innerHTML = emptyStateHtml("Aucun dossier ici pour le moment. Crée ton premier dossier.", "➕ Ajouter un dossier", "dossier-form-box");
     return;
   }
   const today = todayStr();
@@ -622,7 +636,7 @@ function statusBadge(status) {
 function renderDocuments() {
   const box = $("#documents-list");
   if (!data.documents.length) {
-    box.innerHTML = '<div class="empty-note">Aucun document suivi pour le moment. Ajoute la première pièce à suivre ci-dessous (par exemple : « Relevé bancaire » en statut Manquant).</div>';
+    box.innerHTML = emptyStateHtml("Aucun document suivi pour le moment. Ajoute la première pièce à suivre (par exemple : « Relevé bancaire » en statut Manquant).", "➕ Ajouter un document", "doc-form-box");
     return;
   }
   box.innerHTML = data.documents.map((d) => {
@@ -757,7 +771,7 @@ async function deleteDocument(id) {
 function renderDeadlines() {
   const box = $("#deadlines-list");
   if (!data.deadlines.length) {
-    box.innerHTML = '<div class="empty-note">Aucune échéance pour le moment. Génère le calendrier fiscal d\'un client ci-dessus, ou ajoute une échéance manuelle.</div>';
+    box.innerHTML = emptyStateHtml("Aucune échéance pour le moment. Génère le calendrier fiscal d'un client ci-dessus, ou ajoute une échéance manuelle.", "➕ Ajouter une échéance manuelle", "deadline-form-box");
     return;
   }
   const today = todayStr();
@@ -875,6 +889,15 @@ async function deleteDeadline(id) {
    ============================================================ */
 function renderTeam() {
   const box = $("#team-list");
+  if (!data.members.length) {
+    /* Le formulaire d'ajout est réservé au responsable : un employé ne
+       voit que le message, sans bouton qui ouvrirait un formulaire caché. */
+    box.innerHTML = currentRole === "responsable"
+      ? emptyStateHtml("Aucun membre dans l'équipe pour le moment. Ajoute ton premier collègue.", "➕ Ajouter un membre", "member-form-box")
+      : '<div class="empty-note">Aucun membre dans l\'équipe pour le moment.</div>';
+    $("#member-form-box").style.display = currentRole === "responsable" ? "" : "none";
+    return;
+  }
   box.innerHTML = data.members.map((m) => {
     const isMe = m.user_id === currentUser.id;
     const pending = !m.user_id;
@@ -1138,6 +1161,27 @@ function wireEvents() {
   $("#btn-owner").addEventListener("click", () => showPage("proprietaire"));
   $("#btn-owner-back").addEventListener("click", () => showPage("dashboard"));
   $$(".nav-btn").forEach((b) => b.addEventListener("click", () => showPage(b.dataset.page)));
+
+  /* Raccourcis cliquables, en écouteur délégué (ils survivent aux
+     re-rendus des listes) :
+     - [data-goto] : navigue vers une page — compteurs, alertes et
+       encadrés du tableau de bord, via la même showPage() que le menu ;
+     - [data-open-form] : ouvre le <details> du formulaire d'ajout visé
+       et défile jusqu'à lui — boutons des états vides des pages. */
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest) return;
+    const opener = e.target.closest("[data-open-form]");
+    if (opener) {
+      const formBox = document.getElementById(opener.dataset.openForm);
+      if (formBox) {
+        formBox.open = true;
+        formBox.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+    const go = e.target.closest("[data-goto]");
+    if (go) showPage(go.dataset.goto);
+  });
 
   $("#form-client").addEventListener("submit", handleClientSubmit);
   $("#cl-cancel").addEventListener("click", resetClientForm);
