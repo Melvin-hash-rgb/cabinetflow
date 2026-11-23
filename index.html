@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="CabinetFlow — cabinets comptables du Cameroun">
 <meta name="twitter:description" content="Clients, dossiers, documents et échéances fiscales — un espace privé pour chaque cabinet. Essai gratuit de 14 jours.">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -22,15 +22,17 @@
   <div class="brand-name">CabinetFlow</div>
   <p class="muted">Chargement…</p>
   <div id="slow-note" class="notice-card hidden">
-    <p><strong>C'est long à charger.</strong> Ta connexion est peut-être lente. Attends encore un peu, ou recharge la page. Si ça ne marche toujours pas, ouvre ce lien dans le navigateur <strong>Chrome</strong> : touche le menu ⋮ puis « Ouvrir dans Chrome ».</p>
+    <p><strong>La connexion semble lente.</strong> CabinetFlow met du temps à démarrer. Attends encore un peu, ou recharge la page. Si ça ne marche toujours pas, essaie de passer en <strong>données mobiles</strong> — ou de te rapprocher du Wi-Fi — puis recharge la page.</p>
     <button type="button" class="btn-gold" onclick="location.reload()">🔄 Recharger la page</button>
   </div>
 </div>
 <script>
-/* Si l'application n'a pas démarré après 8 secondes, on explique au lieu de laisser un écran vide. */
+/* Watchdog de démarrage : si l'application n'a pas démarré après 8 secondes
+   (app.js pose window.__cfStarted = true dès qu'un écran s'affiche), on montre
+   l'aide au lieu de laisser une page blanche sans explication. */
 setTimeout(function () {
   var n = document.getElementById("slow-note");
-  if (n && !window.__cfReady) n.classList.remove("hidden");
+  if (n && !window.__cfStarted) n.classList.remove("hidden");
 }, 8000);
 </script>
 
@@ -460,8 +462,8 @@ setTimeout(function () {
 
 <div id="toast" class="toast hidden"></div>
 
-<script src="config.js?v=2"></script>
-<script src="supabase.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="config.js?v=3"></script>
+<script src="supabase.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

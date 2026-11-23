@@ -160,7 +160,9 @@ function showView(id) {
     const el = document.getElementById(v);
     if (el) el.classList.toggle("hidden", v !== id);
   });
-  window.__cfReady = true;
+  /* Démarrage réussi : on le signale au watchdog de index.html (qui affiche
+     une aide après 8 s si aucun écran n'est apparu) et on cache cette aide. */
+  window.__cfStarted = true;
   const slow = $("#slow-note");
   if (slow) slow.classList.add("hidden");
 }
