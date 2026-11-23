@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CabinetFlow — Le logiciel des cabinets comptables du Cameroun</title>
+<meta name="description" content="CabinetFlow aide les cabinets comptables du Cameroun à suivre leurs clients, leurs dossiers, leurs documents et leurs échéances fiscales — sans plus jamais rater le 15 du mois. Essai gratuit de 14 jours.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CabinetFlow">
+<meta property="og:title" content="CabinetFlow — cabinets comptables du Cameroun">
+<meta property="og:description" content="Clients, dossiers, documents, échéances fiscales camerounaises et alertes — dans un seul espace privé pour ton cabinet. Essai gratuit de 14 jours.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CabinetFlow — cabinets comptables du Cameroun">
+<meta name="twitter:description" content="Clients, dossiers, documents et échéances fiscales — un espace privé pour chaque cabinet. Essai gratuit de 14 jours.">
+<link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+
+<!-- ============ ÉCRAN DE CHARGEMENT ============ -->
+<div id="view-loading" class="screen-center">
+  <div class="brand-mark">📊</div>
+  <div class="brand-name">CabinetFlow</div>
+  <p class="muted">Chargement…</p>
+  <div id="slow-note" class="notice-card hidden">
+    <p><strong>C'est long à charger.</strong> Ta connexion est peut-être lente. Attends encore un peu, ou recharge la page. Si ça ne marche toujours pas, ouvre ce lien dans le navigateur <strong>Chrome</strong> : touche le menu ⋮ puis « Ouvrir dans Chrome ».</p>
+    <button type="button" class="btn-gold" onclick="location.reload()">🔄 Recharger la page</button>
+  </div>
+</div>
+<script>
+/* Si l'application n'a pas démarré après 8 secondes, on explique au lieu de laisser un écran vide. */
+setTimeout(function () {
+  var n = document.getElementById("slow-note");
+  if (n && !window.__cfReady) n.classList.remove("hidden");
+}, 8000);
+</script>
+
+<!-- ============ CONFIGURATION MANQUANTE ============ -->
+<div id="view-config" class="screen-center hidden">
+  <div class="brand-mark">📊</div>
+  <div class="brand-name">CabinetFlow</div>
+  <div class="notice-card">
+    <h2>CabinetFlow n'est pas encore branché</h2>
+    <p>La base de données n'est pas configurée : le fichier <strong>config.js</strong> ne contient pas encore l'adresse du projet Supabase.</p>
+    <p>Si tu es le propriétaire du site, suis le guide <strong>README.md</strong> : colle l'URL du projet et la clé « anon » dans <strong>config.js</strong>, puis applique le fichier <strong>supabase-schema.sql</strong>.</p>
+    <p>Ensuite, recharge cette page — tout fonctionnera.</p>
+  </div>
+</div>
+
+<!-- ============ PORTE D'ENTRÉE (connexion / création de compte) ============ -->
+<div id="view-auth" class="hidden">
+  <div class="auth-hero">
+    <div class="brand-mark big">📊</div>
+    <h1 class="brand-name light">CabinetFlow</h1>
+    <p class="slogan">Ton cabinet, tes dossiers, tes échéances — enfin sous contrôle.</p>
+    <p class="auth-tagline">Le logiciel en ligne des cabinets comptables du Cameroun : clients, dossiers, documents et calendrier fiscal automatique. Chaque cabinet a son espace privé.</p>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button type="button" id="tab-login" class="auth-tab active">Se connecter</button>
+      <button type="button" id="tab-signup" class="auth-tab">Créer un compte</button>
+    </div>
+
+    <!-- Connexion -->
+    <form id="form-login" class="auth-form">
+      <label>Courriel
+        <input type="email" id="login-email" required autocomplete="email" placeholder="ton@courriel.com">
+      </label>
+      <label>Mot de passe
+        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Ton mot de passe">
+      </label>
+      <p id="login-msg" class="form-msg"></p>
+      <button type="submit" class="btn-gold big-btn">Se connecter</button>
+    </form>
+
+    <!-- Création de compte -->
+    <form id="form-signup" class="auth-form hidden">
+      <label>Courriel professionnel
+        <input type="email" id="signup-email" required autocomplete="email" placeholder="ton@courriel.com">
+      </label>
+      <label>Mot de passe
+        <input type="password" id="signup-password" required autocomplete="new-password" minlength="6" placeholder="6 caractères minimum">
+      </label>
+      <label>Confirme ton mot de passe
+        <input type="password" id="signup-password2" required autocomplete="new-password" placeholder="Le même mot de passe">
+      </label>
+      <p id="signup-msg" class="form-msg"></p>
+      <button type="submit" class="btn-gold big-btn">Créer mon compte</button>
+      <p class="tiny muted">Après la création du compte, tu créeras l'espace de ton cabinet : ton <strong>essai gratuit de 14 jours</strong> démarrera à ce moment-là. Personne d'autre ne peut entrer dans ton compte : il est protégé par ton mot de passe.</p>
+    </form>
+  </div>
+
+  <p class="auth-footer">CabinetFlow — Édité par Bamen Melvin Junior, Montréal. Société en cours de création : l'enregistrement (RCCM, NIU) sera finalisé avant tout contrat payant.</p>
+</div>
+
+<!-- ============ MES CABINETS (choix / création / invitations) ============ -->
+<div id="view-setup" class="hidden">
+  <div class="setup-wrap">
+    <div class="auth-hero">
+      <div class="brand-mark big">📊</div>
+      <h1 class="brand-name light">CabinetFlow</h1>
+      <p class="slogan">Bienvenue !</p>
+      <p class="auth-tagline" id="setup-hello"></p>
+    </div>
+
+    <div id="invites-block" class="setup-card hidden">
+      <h2>📩 Invitations reçues</h2>
+      <p class="muted">Un cabinet t'a ajouté à son équipe avec ce courriel. Rejoins-le :</p>
+      <div id="invites-list"></div>
+    </div>
+
+    <div id="my-cabinets-block" class="setup-card hidden">
+      <h2>🏢 Mes cabinets</h2>
+      <div id="my-cabinets-list"></div>
+    </div>
+
+    <div class="setup-card">
+      <h2>➕ Créer l'espace de mon cabinet</h2>
+      <p class="muted">Ton cabinet aura son espace privé : tes clients, tes dossiers et tes documents n'y seront visibles que par toi et ton équipe. Ton <strong>essai gratuit de 14 jours</strong> démarre à la création.</p>
+      <form id="form-cabinet" class="stack-form">
+        <label>Nom du cabinet <input type="text" id="cab-name" required placeholder="Ex. : Cabinet Fiduciaire du Littoral"></label>
+        <label>Ville <input type="text" id="cab-city" required placeholder="Ex. : Douala"></label>
+        <label>Courriel du cabinet <input type="email" id="cab-email" placeholder="contact@toncabinet.com"></label>
+        <label>Téléphone / WhatsApp <input type="tel" id="cab-phone" placeholder="Ex. : +237 6XX XX XX XX"></label>
+        <p class="form-msg" id="cab-msg"></p>
+        <button type="submit" class="btn-gold big-btn">Créer mon cabinet et démarrer l'essai</button>
+      </form>
+    </div>
+
+    <p class="setup-logout"><button type="button" class="btn-header" id="btn-logout-setup">Se déconnecter</button></p>
+  </div>
+</div>
+
+<!-- ============ APPLICATION (cabinet ouvert) ============ -->
+<div id="view-app" class="hidden">
+  <header class="app-header">
+    <div class="logo-block">
+      <span class="logo-globe">📊</span>
+      <div>
+        <div class="logo-text">CabinetFlow</div>
+        <div class="logo-cabinet" id="app-cabinet-name"></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="app-user-email" class="hello"></span>
+      <button type="button" class="btn-header hidden" id="btn-owner">👑 Console propriétaire</button>
+      <button type="button" class="btn-header" id="btn-switch-cabinet">Changer de cabinet</button>
+      <button type="button" class="btn-header" id="btn-logout">Se déconnecter</button>
+    </div>
+  </header>
+
+  <div id="access-banner" class="access-banner hidden"></div>
+
+  <nav class="main-nav" aria-label="Navigation principale">
+    <button type="button" data-page="dashboard" class="nav-btn active">🏠 Tableau de bord</button>
+    <button type="button" data-page="clients" class="nav-btn">👥 Clients</button>
+    <button type="button" data-page="dossiers" class="nav-btn">🗂️ Dossiers</button>
+    <button type="button" data-page="documents" class="nav-btn">📄 Documents</button>
+    <button type="button" data-page="echeances" class="nav-btn">⏰ Échéances</button>
+    <button type="button" data-page="equipe" class="nav-btn">🧑‍🤝‍🧑 Équipe</button>
+    <button type="button" data-page="abonnement" class="nav-btn">💳 Abonnement</button>
+    <button type="button" data-page="confidentialite" class="nav-btn">🔒 Confidentialité</button>
+  </nav>
+
+  <main class="app-main">
+
+    <!-- ===== TABLEAU DE BORD ===== -->
+    <section id="page-dashboard" class="page">
+      <h2 class="page-title">🏠 Tableau de bord</h2>
+      <p class="page-sub" id="dash-sub"></p>
+      <div id="dash-counters" class="counters-grid"></div>
+      <h3 class="section-title">🚨 Alertes</h3>
+      <div id="dash-alerts"></div>
+      <h3 class="section-title">⏰ Prochaines échéances</h3>
+      <div id="dash-upcoming"></div>
+      <div class="export-box">
+        <h3>📦 Tes données t'appartiennent</h3>
+        <p>À tout moment, tu peux télécharger toutes les données de ton cabinet (clients, dossiers, documents, échéances) en fichiers CSV.</p>
+        <button type="button" class="btn-gold btn-export">⬇️ Exporter les données du cabinet (CSV)</button>
+      </div>
+    </section>
+
+    <!-- ===== CLIENTS ===== -->
+    <section id="page-clients" class="page hidden">
+      <h2 class="page-title">👥 Clients</h2>
+      <p class="page-sub">Les entreprises que ton cabinet accompagne, avec leurs informations fiscales camerounaises.</p>
+      <div id="clients-list"></div>
+      <details class="publish-box" id="client-form-box">
+        <summary>➕ Ajouter / modifier un client</summary>
+        <form id="form-client" class="stack-form">
+          <input type="hidden" id="cl-id">
+          <label>Nom du client (raison sociale) <input type="text" id="cl-name" required placeholder="Ex. : Boutique Horizon SARL"></label>
+          <label>Personne de contact <input type="text" id="cl-contact" placeholder="Ex. : Mme Fotso"></label>
+          <label>Ville <input type="text" id="cl-city" placeholder="Ex. : Douala"></label>
+          <label>Téléphone <input type="tel" id="cl-phone"></label>
+          <label>Courriel <input type="email" id="cl-email"></label>
+          <label>NIU (Numéro d'Identifiant Unique) <input type="text" id="cl-niu"></label>
+          <label>Régime fiscal
+            <select id="cl-regime">
+              <option value="">— Choisir —</option>
+              <option>Réel</option>
+              <option>Simplifié</option>
+              <option>Impôt libératoire</option>
+              <option>Non professionnel</option>
+            </select>
+          </label>
+          <label>Centre des impôts
+            <select id="cl-centre">
+              <option value="">— Choisir —</option>
+              <option>DGE</option>
+              <option>CIME</option>
+              <option>CDI</option>
+              <option>Autre</option>
+            </select>
+          </label>
+          <label>N° CNPS (employeur) <input type="text" id="cl-cnps"></label>
+          <label>Système SYSCOHADA
+            <select id="cl-syscohada">
+              <option value="">— Choisir —</option>
+              <option>Système normal</option>
+              <option>Système minimal de trésorerie</option>
+            </select>
+          </label>
+          <p class="form-msg" id="cl-msg"></p>
+          <button type="submit" class="btn-gold">Enregistrer le client</button>
+          <button type="button" class="btn-outline hidden" id="cl-cancel">Annuler la modification</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- ===== DOSSIERS ===== -->
+    <section id="page-dossiers" class="page hidden">
+      <h2 class="page-title">🗂️ Dossiers</h2>
+      <p class="page-sub">Un dossier par mission : tenue, paie, DSF, création d'entreprise…</p>
+      <form id="form-dossier-filter" class="filter-bar">
+        <label class="filter-label">Voir les dossiers de :
+          <select id="filter-dossiers-client">
+            <option value="">Tous les clients</option>
+          </select>
+        </label>
+      </form>
+      <div id="dossiers-list"></div>
+      <details class="publish-box" id="dossier-form-box">
+        <summary>➕ Ajouter / modifier un dossier</summary>
+        <form id="form-dossier" class="stack-form">
+          <input type="hidden" id="do-id">
+          <label>Client
+            <select id="do-client" required></select>
+          </label>
+          <label>Modèle (remplit le titre pour toi)
+            <select id="do-template">
+              <option value="">— Dossier libre —</option>
+              <option value="Tenue comptable mensuelle">Tenue comptable mensuelle</option>
+              <option value="Paie / DIPE">Paie / DIPE</option>
+              <option value="DSF annuelle">DSF annuelle</option>
+              <option value="Création d'entreprise">Création d'entreprise</option>
+            </select>
+          </label>
+          <label>Titre du dossier <input type="text" id="do-title" required placeholder="Ex. : DSF annuelle 2026"></label>
+          <label>Statut
+            <select id="do-status">
+              <option>En cours</option>
+              <option>Terminé</option>
+            </select>
+          </label>
+          <label>Date d'échéance du dossier <input type="date" id="do-due"></label>
+          <p class="form-msg" id="do-msg"></p>
+          <button type="submit" class="btn-gold">Enregistrer le dossier</button>
+          <button type="button" class="btn-outline hidden" id="do-cancel">Annuler la modification</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- ===== DOCUMENTS ===== -->
+    <section id="page-documents" class="page hidden">
+      <h2 class="page-title">📄 Documents</h2>
+      <p class="page-sub">Pour chaque dossier : ce qui est reçu, ce qui manque, ce qui a été demandé ou validé. Tu peux joindre le fichier depuis ton téléphone.</p>
+      <div id="documents-list"></div>
+      <details class="publish-box" id="doc-form-box">
+        <summary>➕ Ajouter / modifier un document</summary>
+        <form id="form-doc" class="stack-form">
+          <input type="hidden" id="doc-id">
+          <label>Dossier
+            <select id="doc-dossier"></select>
+          </label>
+          <label>Client
+            <select id="doc-client"></select>
+          </label>
+          <label>Titre du document <input type="text" id="doc-title" required placeholder="Ex. : Relevé bancaire de novembre"></label>
+          <label>Statut
+            <select id="doc-status">
+              <option>Manquant</option>
+              <option>Demandé</option>
+              <option>Reçu</option>
+              <option>Validé</option>
+            </select>
+          </label>
+          <label>📎 Joindre le fichier (photo ou document, depuis ton téléphone)
+            <input type="file" id="doc-file">
+          </label>
+          <p class="tiny muted" id="doc-file-name"></p>
+          <img id="doc-file-preview" class="photo-preview hidden" alt="Aperçu du fichier joint">
+          <p class="form-msg" id="doc-msg"></p>
+          <button type="submit" class="btn-gold">Enregistrer le document</button>
+          <button type="button" class="btn-outline hidden" id="doc-cancel">Annuler la modification</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- ===== ÉCHÉANCES ===== -->
+    <section id="page-echeances" class="page hidden">
+      <h2 class="page-title">⏰ Échéances</h2>
+      <p class="page-sub">Le calendrier fiscal camerounais de chaque client, généré automatiquement — plus les échéances que tu ajoutes toi-même.</p>
+
+      <div class="gen-box">
+        <h3>🗓️ Générer le calendrier fiscal d'un client</h3>
+        <p class="muted">TVA et DIPE/CNPS le 15 de chaque mois suivant, patente le 28 février, et la DSF selon le centre des impôts du client (DGE : 15 mars · CIME : 15 avril · CDI : 15 mai). Les échéances déjà présentes ne sont pas créées deux fois.</p>
+        <form id="form-gen-calendar" class="stack-form">
+          <label>Client
+            <select id="gen-client" required></select>
+          </label>
+          <label>Année <input type="number" id="gen-year" min="2024" max="2100" required></label>
+          <p class="form-msg" id="gen-msg"></p>
+          <button type="submit" class="btn-gold">Générer le calendrier</button>
+        </form>
+      </div>
+
+      <div id="deadlines-list"></div>
+
+      <details class="publish-box" id="deadline-form-box">
+        <summary>➕ Ajouter / modifier une échéance manuelle</summary>
+        <form id="form-deadline" class="stack-form">
+          <input type="hidden" id="dl-id">
+          <label>Client
+            <select id="dl-client"></select>
+          </label>
+          <label>Titre <input type="text" id="dl-title" required placeholder="Ex. : Renouvellement de la patente"></label>
+          <label>Date <input type="date" id="dl-date" required></label>
+          <label>Type
+            <select id="dl-type">
+              <option>Manuel</option>
+              <option>TVA</option>
+              <option>DIPE-CNPS</option>
+              <option>Patente</option>
+              <option>DSF</option>
+            </select>
+          </label>
+          <p class="form-msg" id="dl-msg"></p>
+          <button type="submit" class="btn-gold">Enregistrer l'échéance</button>
+          <button type="button" class="btn-outline hidden" id="dl-cancel">Annuler la modification</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- ===== ÉQUIPE ===== -->
+    <section id="page-equipe" class="page hidden">
+      <h2 class="page-title">🧑‍🤝‍🧑 Équipe</h2>
+      <p class="page-sub">Seules les personnes de cette liste peuvent entrer dans l'espace de ton cabinet. Le <strong>responsable</strong> gère l'équipe et l'abonnement ; les <strong>employés</strong> travaillent dans les clients, dossiers, documents et échéances.</p>
+      <div id="team-list"></div>
+      <details class="publish-box" id="member-form-box">
+        <summary>➕ Ajouter un membre</summary>
+        <form id="form-member" class="stack-form">
+          <label>Courriel du membre (celui de son compte CabinetFlow)
+            <input type="email" id="mb-email" required placeholder="collegue@courriel.com">
+          </label>
+          <label>Rôle
+            <select id="mb-role">
+              <option value="employe">Employé</option>
+              <option value="responsable">Responsable</option>
+            </select>
+          </label>
+          <p class="tiny muted">La personne doit d'abord créer son compte CabinetFlow avec ce courriel (gratuit). Dès sa prochaine connexion, elle verra ton cabinet dans « Mes cabinets » et pourra y entrer.</p>
+          <p class="form-msg" id="mb-msg"></p>
+          <button type="submit" class="btn-gold">Ajouter le membre</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- ===== ABONNEMENT ===== -->
+    <section id="page-abonnement" class="page hidden">
+      <h2 class="page-title">💳 Abonnement</h2>
+      <div id="sub-status" class="sub-status-card"></div>
+
+      <h3 class="section-title">Les formules (fixées par CabinetFlow)</h3>
+      <div id="plans-grid" class="plans-grid"></div>
+
+      <div class="gen-box">
+        <h3>📲 J'ai payé : déclarer mon paiement</h3>
+        <p class="muted">Paie ta formule par <strong>MTN Mobile Money</strong>, <strong>Orange Money</strong>, <strong>virement</strong> ou <strong>carte</strong>, puis déclare le paiement ici avec sa référence. Le propriétaire de CabinetFlow le valide, et ta période d'un mois démarre. Le montant est celui de la formule choisie — il n'y a rien d'autre à payer.</p>
+        <form id="form-pay" class="stack-form">
+          <label>Formule choisie
+            <select id="pay-plan">
+              <option value="essentiel">Essentiel — 10 000 FCFA / mois</option>
+              <option value="pro">Pro — 25 000 FCFA / mois</option>
+              <option value="premium">Premium — 45 000 FCFA / mois</option>
+            </select>
+          </label>
+          <p class="pay-amount">Montant à payer : <strong id="pay-amount">10 000 FCFA</strong></p>
+          <label>Moyen de paiement
+            <select id="pay-method">
+              <option>MTN Mobile Money</option>
+              <option>Orange Money</option>
+              <option>Virement</option>
+              <option>Carte</option>
+            </select>
+          </label>
+          <label>Référence du paiement <input type="text" id="pay-ref" required placeholder="Ex. : le code de transaction Mobile Money"></label>
+          <p class="form-msg" id="pay-msg"></p>
+          <button type="submit" class="btn-gold">Déclarer le paiement</button>
+        </form>
+      </div>
+
+      <h3 class="section-title">Mes paiements</h3>
+      <div id="my-payments-list"></div>
+
+      <div class="export-box">
+        <h3>📦 Exporter mes données</h3>
+        <p>Tes données t'appartiennent : télécharge-les en CSV à tout moment, y compris si tu arrêtes l'abonnement.</p>
+        <button type="button" class="btn-gold btn-export">⬇️ Exporter les données du cabinet (CSV)</button>
+      </div>
+    </section>
+
+    <!-- ===== CONFIDENTIALITÉ ===== -->
+    <section id="page-confidentialite" class="page hidden">
+      <h2 class="page-title">🔒 Confidentialité et sécurité</h2>
+      <div class="legal-text">
+        <p><strong>Tes données appartiennent à ton cabinet.</strong> Les clients, dossiers, documents et échéances que tu enregistres dans CabinetFlow restent la propriété de ton cabinet. CabinetFlow ne les vend pas, ne les partage pas et ne les utilise pour rien d'autre que faire fonctionner ton espace.</p>
+        <p><strong>Un espace fermé par cabinet.</strong> Seules les personnes que le responsable de ton cabinet a ajoutées à l'équipe peuvent voir ses données. Un autre cabinet ne voit jamais les tiennes, et tu ne vois jamais les siennes.</p>
+        <p><strong>Suppression sur demande.</strong> Tu peux supprimer tes clients, dossiers et documents à tout moment dans l'application, exporter toutes tes données en CSV, et demander la suppression complète de l'espace de ton cabinet en écrivant à <a href="mailto:bamenmelvinjunior@gmail.com">bamenmelvinjunior@gmail.com</a>.</p>
+        <p><strong>Cadre légal.</strong> CabinetFlow s'inscrit dans le respect de la législation camerounaise applicable : la loi n° 2010/012 du 21 décembre 2010 relative à la cybersécurité et à la cybercriminalité, et la loi n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel.</p>
+        <p><strong>Qui édite CabinetFlow.</strong> CabinetFlow est édité par Bamen Melvin Junior, développeur basé à Montréal (Canada). Société en cours de création : l'enregistrement (RCCM, NIU) sera finalisé avant tout contrat payant ; les paiements ne seront encaissés que sur un compte identifié par écrit.</p>
+        <p>Questions sur tes données : <a href="mailto:bamenmelvinjunior@gmail.com">bamenmelvinjunior@gmail.com</a> · WhatsApp <a href="tel:+237654304312">+237 654 30 43 12</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===== CONSOLE PROPRIÉTAIRE ===== -->
+    <section id="page-proprietaire" class="page hidden">
+      <button type="button" class="btn-back" id="btn-owner-back">← Retour au tableau de bord</button>
+      <h2 class="page-title">👑 Console propriétaire</h2>
+      <p class="page-sub">Réservée au propriétaire de CabinetFlow : validation des paiements, cabinets inscrits et revenu mensuel.</p>
+      <div class="counters-grid">
+        <div class="counter-card"><span class="counter-num" id="owner-mrr">0 FCFA</span><span class="counter-label">Revenu mensuel récurrent (cabinets en période active)</span></div>
+        <div class="counter-card"><span class="counter-num" id="owner-cabinets-count">0</span><span class="counter-label">Cabinets inscrits</span></div>
+        <div class="counter-card"><span class="counter-num" id="owner-pending-count">0</span><span class="counter-label">Paiements en attente</span></div>
+      </div>
+      <h3 class="section-title">💰 Paiements déclarés à valider</h3>
+      <div id="owner-payments"></div>
+      <h3 class="section-title">🏢 Tous les cabinets inscrits</h3>
+      <div id="owner-cabinets"></div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p><strong>CabinetFlow</strong> — le logiciel des cabinets comptables du Cameroun.</p>
+    <p class="tiny muted">Édité par Bamen Melvin Junior · Montréal / Cameroun · <a href="mailto:bamenmelvinjunior@gmail.com">bamenmelvinjunior@gmail.com</a> · WhatsApp +237 654 30 43 12</p>
+    <p class="tiny muted">Société en cours de création : RCCM et NIU communiqués dès l'enregistrement, avant tout contrat payant.</p>
+  </footer>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="config.js?v=1"></script>
+<script src="supabase.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
